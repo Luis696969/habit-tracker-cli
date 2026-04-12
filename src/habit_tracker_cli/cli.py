@@ -348,7 +348,7 @@ class HabitShellCompleter(Completer):
         try:
             for name in service.list_habit_names():
                 candidate = _quote_completion(name)
-                if candidate.lower().startswith(prefix.lower()):
+                if name.lower().startswith(prefix.lower()):
                     yield Completion(candidate, start_position=-len(prefix))
         finally:
             service.close()
