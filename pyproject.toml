@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "habit_tracker_cli"
+version = "0.1.0"
+description = "A small cross-platform habit tracker CLI with a polished interactive shell."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [
+  { name = "Luis696969" }
+]
+keywords = ["cli", "habits", "productivity", "sqlite", "typer", "rich"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Utilities",
+]
+
+dependencies = [
+  "platformdirs>=4.0,<5.0",
+  "prompt_toolkit>=3.0,<4.0",
+  "rich>=13.7,<14.0",
+  "typer>=0.12,<1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Luis696969/habit-tracker-cli"
+Repository = "https://github.com/Luis696969/habit-tracker-cli"
+Issues = "https://github.com/Luis696969/habit-tracker-cli/issues"
+Changelog = "https://github.com/Luis696969/habit-tracker-cli/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2,<2.0",
+  "pytest>=8.0,<9.0",
+  "twine>=5.0,<6.0",
+]
+
+[project.scripts]
+habit-tracker = "habit_tracker_cli.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q -p no:cacheprovider"
+testpaths = ["tests"]

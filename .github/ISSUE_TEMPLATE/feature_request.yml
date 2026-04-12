@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest an improvement for habit_tracker_cli
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the change you would like to see.
+    validations:
+      required: true
