@@ -239,13 +239,20 @@ def test_shell_completer_completes_habit_names(service, monkeypatch) -> None:
 
 
 @pytest.mark.skipif(not PROMPT_TOOLKIT_TESTS, reason="prompt_toolkit is not installed")
-def test_shell_completer_completes_habit_names_for_undo_and_delete(service, monkeypatch) -> None:
-    service.add_habit("Morning Walk", daily=True, days_csv=None)
-    monkeypatch.setattr(cli, "build_service", lambda: service)
-    completer = cli.HabitShellCompleter(cli.build_service)
+def test_shell_completer_completes_habit_names_for_undo_and_delete(cli_env, monkeypatch) -> None:
+    for key, value in cli_env.items():
+        monkeypatch.setenv(key, value)
 
-    undo_completions = list(completer.get_completions(Document(text="undo Mo", cursor_position=7), None))
-    delete_completions = list(completer.get_completions(Document(text="delete Mo", cursor_position=9), None))
+    service = cli.build_service()
+    service.add_habit("Morning Walk", daily=True, days_csv=None)
+    service.close()
+
+    undo_completions = list(
+        cli.HabitShellCompleter(cli.build_service).get_completions(Document(text="undo Mo", cursor_position=7), None)
+    )
+    delete_completions = list(
+        cli.HabitShellCompleter(cli.build_service).get_completions(Document(text="delete Mo", cursor_position=9), None)
+    )
 
     assert any(item.text == '"Morning Walk"' for item in undo_completions)
     assert any(item.text == '"Morning Walk"' for item in delete_completions)
