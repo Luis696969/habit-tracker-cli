@@ -55,6 +55,8 @@ SHELL_COMMAND_NAMES = (
     "list",
     "today",
     "done",
+    "undo",
+    "delete",
     "streak",
     "report",
     "help",
@@ -114,6 +116,23 @@ COMMAND_DOCS: dict[str, CommandDoc] = {
             "The operation is idempotent.",
             "Names are matched case-insensitively and ignore surrounding spaces.",
         ),
+    ),
+    "undo": CommandDoc(
+        short="Remove today's completion for a habit.",
+        usage=("undo NAME",),
+        description="Deletes today's completion for the named habit and leaves older history intact.",
+        examples=('undo "Read 20 min"',),
+        notes=(
+            "The operation is idempotent.",
+            "Names are matched case-insensitively and ignore surrounding spaces.",
+        ),
+    ),
+    "delete": CommandDoc(
+        short="Delete a habit and all of its completion history.",
+        usage=("delete NAME",),
+        description="Permanently deletes the habit, its scheduled weekdays, and all associated completions.",
+        examples=('delete "Go to the gym"',),
+        notes=("This is a hard delete, not an archive operation.",),
     ),
     "streak": CommandDoc(
         short="Show the current streak for a habit.",
@@ -189,7 +208,7 @@ def abort_with_error(message: str) -> None:
 def shell_help_text() -> RenderableType:
     body = Text()
     body.append("Available commands:\n", style="bold")
-    for name in ("add", "list", "today", "done", "streak", "report", "clear-data"):
+    for name in ("add", "list", "today", "done", "undo", "delete", "streak", "report", "clear-data"):
         body.append(f"  {name:<12}", style="cyan")
         body.append(f"{COMMAND_DOCS[name].short}\n")
     body.append("\nSpecial commands:\n", style="bold")
@@ -217,7 +236,22 @@ def render_command_help(command_name: str) -> RenderableType:
 def render_manual_index() -> RenderableType:
     body = Text()
     body.append("Manual index:\n", style="bold")
-    for name in ("add", "list", "today", "done", "streak", "report", "clear-data", "help", "man", "clear", "exit", "q"):
+    for name in (
+        "add",
+        "list",
+        "today",
+        "done",
+        "undo",
+        "delete",
+        "streak",
+        "report",
+        "clear-data",
+        "help",
+        "man",
+        "clear",
+        "exit",
+        "q",
+    ):
         body.append(f"  {name:<12}", style="cyan")
         body.append(f"{COMMAND_DOCS[name].short}\n")
     return body
@@ -259,7 +293,7 @@ def render_manual_page(command_name: str) -> RenderableType:
 def render_shell_header(status: str | None = None) -> Panel:
     body = Text()
     body.append(f"{SHELL_TITLE}\n", style="bold cyan")
-    body.append("Commands: add, list, today, done, streak, report, clear-data\n")
+    body.append("Commands: add, list, today, done, undo, delete, streak, report, clear-data\n")
     body.append("Special: help, man, clear, exit, q")
     if status:
         body.append(f"\nStatus: {status}", style="green")
@@ -331,7 +365,7 @@ class HabitShellCompleter(Completer):
 
         command = tokens[0].lower()
         prefix = "" if new_token else current_word
-        if command in {"done", "streak"}:
+        if command in {"done", "undo", "delete", "streak"}:
             yield from self._complete_habit_names(prefix)
             return
         if command in {"help", "man"}:
@@ -479,6 +513,39 @@ def done(name: str = typer.Argument(..., metavar="NAME", help="Habit name to mar
         console.print(f"Marked '[cyan]{habit.name}[/cyan]' as done for today.")
     else:
         console.print(f"'{habit.name}' was already marked as done for today.")
+
+
+@app.command()
+def undo(name: str = typer.Argument(..., metavar="NAME", help="Habit name to undo for today.")) -> None:
+    service = build_service()
+    try:
+        habit, removed = service.undo_done(name)
+    except HabitValidationError as exc:
+        abort_with_error(str(exc))
+    except HabitNotFoundError as exc:
+        abort_with_error(str(exc))
+    finally:
+        service.close()
+
+    if removed:
+        console.print(f"Removed today's completion for '[cyan]{habit.name}[/cyan]'.")
+    else:
+        console.print(f"'{habit.name}' was not marked as done for today.")
+
+
+@app.command()
+def delete(name: str = typer.Argument(..., metavar="NAME", help="Habit name to delete permanently.")) -> None:
+    service = build_service()
+    try:
+        habit = service.delete_habit(name)
+    except HabitValidationError as exc:
+        abort_with_error(str(exc))
+    except HabitNotFoundError as exc:
+        abort_with_error(str(exc))
+    finally:
+        service.close()
+
+    console.print(f"Deleted habit '[cyan]{habit.name}[/cyan]' and its completion history.")
 
 
 @app.command()

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 - 2026-04-13
+
+- Added `undo NAME` to remove today's completion idempotently.
+- Added `delete NAME` to hard-delete habits and their related history.
+- Integrated `undo` and `delete` into the interactive shell, help pages, and habit-name completion.
+
 ## 0.1.0 - 2026-04-13
 
 - First public release.

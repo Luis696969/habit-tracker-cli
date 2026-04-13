@@ -115,6 +115,28 @@ class HabitRepository:
         self.connection.commit()
         return cursor.rowcount > 0
 
+    def remove_completion(self, habit_id: int, completed_on: date) -> bool:
+        cursor = self.connection.execute(
+            """
+            DELETE FROM completions
+            WHERE habit_id = ? AND completed_on = ?
+            """,
+            (habit_id, iso_date(completed_on)),
+        )
+        self.connection.commit()
+        return cursor.rowcount > 0
+
+    def delete_habit(self, habit_id: int) -> bool:
+        cursor = self.connection.execute(
+            """
+            DELETE FROM habits
+            WHERE id = ?
+            """,
+            (habit_id,),
+        )
+        self.connection.commit()
+        return cursor.rowcount > 0
+
     def get_completion_dates(
         self,
         habit_id: int,

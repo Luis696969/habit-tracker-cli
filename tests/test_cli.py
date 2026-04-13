@@ -51,6 +51,46 @@ def test_done_and_streak_support_names_with_spaces(cli_env) -> None:
     assert "Current streak" in streak_result.stdout
 
 
+def test_undo_supports_names_with_spaces(cli_env) -> None:
+    runner.invoke(cli.app, ["add", "Morning Walk", "--daily"], env=cli_env)
+    runner.invoke(cli.app, ["done", "Morning Walk"], env=cli_env)
+
+    result = runner.invoke(cli.app, ["undo", "Morning Walk"], env=cli_env)
+
+    assert result.exit_code == 0
+    assert "Removed today's completion" in result.stdout
+    assert "Morning Walk" in result.stdout
+
+
+def test_undo_without_existing_completion_is_idempotent(cli_env) -> None:
+    runner.invoke(cli.app, ["add", "Read", "--daily"], env=cli_env)
+
+    result = runner.invoke(cli.app, ["undo", "Read"], env=cli_env)
+
+    assert result.exit_code == 0
+    assert "was not marked as done for today" in result.stdout
+
+
+def test_delete_removes_habit_from_list(cli_env) -> None:
+    runner.invoke(cli.app, ["add", "Go to the gym", "--days", "mon,wed,fri"], env=cli_env)
+
+    delete_result = runner.invoke(cli.app, ["delete", "Go to the gym"], env=cli_env)
+    list_result = runner.invoke(cli.app, ["list"], env=cli_env)
+
+    assert delete_result.exit_code == 0
+    assert "Deleted habit" in delete_result.stdout
+    assert "Go to the gym" in delete_result.stdout
+    assert list_result.exit_code == 0
+    assert "No habits found" in list_result.stdout
+
+
+def test_delete_missing_habit_returns_exit_code_1(cli_env) -> None:
+    result = runner.invoke(cli.app, ["delete", "Missing"], env=cli_env)
+
+    assert result.exit_code == 1
+    assert "was not found" in result.stderr
+
+
 def test_list_today_and_report_commands(cli_env) -> None:
     runner.invoke(cli.app, ["add", "Read", "--daily"], env=cli_env)
 
@@ -92,12 +132,29 @@ def test_shell_command_dispatches_existing_commands(cli_env) -> None:
     assert "habit_tracker_cli" in result.stdout
 
 
+def test_shell_supports_undo_and_delete(cli_env) -> None:
+    result = runner.invoke(
+        cli.app,
+        ["shell"],
+        input='add "Read 20 min" --daily\ndone "Read 20 min"\nundo "Read 20 min"\ndelete "Read 20 min"\nlist\nq\n',
+        env=cli_env,
+    )
+
+    assert result.exit_code == 0
+    assert "Removed today's completion" in result.stdout
+    assert "Deleted habit" in result.stdout
+    assert "No habits found" in result.stdout
+
+
 def test_shell_help_and_exit(cli_env) -> None:
     result = runner.invoke(cli.app, ["shell"], input="help\nexit\n", env=cli_env)
 
     assert result.exit_code == 0
     assert "habit_tracker_cli" in result.stdout
     assert "Available commands" in result.stdout
+    assert "Remove today's completion for a habit." in result.stdout
+    assert "Delete a habit and all of its completion history." in result.stdout
+    assert "Commands: add, list, today, done, undo, delete, streak, report, clear-data" in result.stdout
     assert "Special: help, man, clear, exit, q" in result.stdout
     assert "Delete the local database" in result.stdout
     assert "self-remove" not in result.stdout
@@ -153,6 +210,15 @@ def test_shell_manual_for_command(cli_env) -> None:
     assert "report --week" in result.stdout
 
 
+def test_shell_help_for_delete_command(cli_env) -> None:
+    result = runner.invoke(cli.app, ["shell"], input="help delete\nq\n", env=cli_env)
+
+    assert result.exit_code == 0
+    assert "delete" in result.stdout
+    assert "Delete a habit and all of its completion history." in result.stdout
+    assert "delete NAME" in result.stdout
+
+
 @pytest.mark.skipif(not PROMPT_TOOLKIT_TESTS, reason="prompt_toolkit is not installed")
 def test_shell_completer_completes_commands() -> None:
     completer = cli.HabitShellCompleter(cli.build_service)
@@ -170,6 +236,26 @@ def test_shell_completer_completes_habit_names(service, monkeypatch) -> None:
     completions = list(completer.get_completions(Document(text="done Mo", cursor_position=7), None))
 
     assert any(item.text == '"Morning Walk"' for item in completions)
+
+
+@pytest.mark.skipif(not PROMPT_TOOLKIT_TESTS, reason="prompt_toolkit is not installed")
+def test_shell_completer_completes_habit_names_for_undo_and_delete(cli_env, monkeypatch) -> None:
+    for key, value in cli_env.items():
+        monkeypatch.setenv(key, value)
+
+    service = cli.build_service()
+    service.add_habit("Morning Walk", daily=True, days_csv=None)
+    service.close()
+
+    undo_completions = list(
+        cli.HabitShellCompleter(cli.build_service).get_completions(Document(text="undo Mo", cursor_position=7), None)
+    )
+    delete_completions = list(
+        cli.HabitShellCompleter(cli.build_service).get_completions(Document(text="delete Mo", cursor_position=9), None)
+    )
+
+    assert any(item.text == '"Morning Walk"' for item in undo_completions)
+    assert any(item.text == '"Morning Walk"' for item in delete_completions)
 
 
 def test_main_without_subcommands_starts_shell(monkeypatch) -> None:

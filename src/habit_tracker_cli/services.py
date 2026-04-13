@@ -64,6 +64,15 @@ class HabitService:
     def list_habit_names(self) -> list[str]:
         return [habit.name for habit in self.list_habits()]
 
+    def _require_habit(self, name: str) -> Habit:
+        try:
+            habit = self.repository.get_habit_by_name(name)
+        except ValueError as exc:
+            raise HabitValidationError(str(exc)) from exc
+        if habit is None:
+            raise HabitNotFoundError(f"Habit '{name.strip()}' was not found.")
+        return habit
+
     def get_today_habits(self, target_date: date | None = None) -> list[HabitWithStatus]:
         target_date = target_date or today_local()
         habits = self.repository.list_habits()
@@ -84,25 +93,24 @@ class HabitService:
 
     def mark_done(self, name: str, completed_on: date | None = None) -> tuple[Habit, bool]:
         completed_on = completed_on or today_local()
-        try:
-            habit = self.repository.get_habit_by_name(name)
-        except ValueError as exc:
-            raise HabitValidationError(str(exc)) from exc
-        if habit is None:
-            raise HabitNotFoundError(f"Habit '{name.strip()}' was not found.")
-
+        habit = self._require_habit(name)
         inserted = self.repository.add_completion(habit.id, completed_on)
         return habit, inserted
 
+    def undo_done(self, name: str, completed_on: date | None = None) -> tuple[Habit, bool]:
+        completed_on = completed_on or today_local()
+        habit = self._require_habit(name)
+        removed = self.repository.remove_completion(habit.id, completed_on)
+        return habit, removed
+
+    def delete_habit(self, name: str) -> Habit:
+        habit = self._require_habit(name)
+        self.repository.delete_habit(habit.id)
+        return habit
+
     def get_streak(self, name: str, as_of: date | None = None) -> tuple[Habit, int]:
         as_of = as_of or today_local()
-        try:
-            habit = self.repository.get_habit_by_name(name)
-        except ValueError as exc:
-            raise HabitValidationError(str(exc)) from exc
-        if habit is None:
-            raise HabitNotFoundError(f"Habit '{name.strip()}' was not found.")
-
+        habit = self._require_habit(name)
         anchor_date = latest_scheduled_on_or_before(habit, as_of)
         if anchor_date is None:
             return habit, 0
