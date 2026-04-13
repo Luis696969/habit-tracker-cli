@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from datetime import date
 
+import pytest
+
+from habit_tracker_cli.services import HabitNotFoundError
+
 
 def test_get_today_habits_returns_due_items(service) -> None:
     service.add_habit("Read", daily=True, days_csv=None)
@@ -20,6 +24,47 @@ def test_mark_done_is_idempotent(service) -> None:
 
     assert first is True
     assert second is False
+
+
+def test_undo_done_removes_existing_completion(service) -> None:
+    service.add_habit("Read", daily=True, days_csv=None)
+    service.mark_done("Read", completed_on=date(2026, 4, 12))
+
+    _, removed = service.undo_done("Read", completed_on=date(2026, 4, 12))
+
+    assert removed is True
+    assert service.repository.get_completion_dates(1) == set()
+
+
+def test_undo_done_is_idempotent_when_completion_is_missing(service) -> None:
+    service.add_habit("Read", daily=True, days_csv=None)
+
+    _, removed = service.undo_done("Read", completed_on=date(2026, 4, 12))
+
+    assert removed is False
+
+
+def test_delete_habit_removes_it(service) -> None:
+    service.add_habit("Read", daily=True, days_csv=None)
+
+    deleted = service.delete_habit("Read")
+
+    assert deleted.name == "Read"
+    assert service.list_habits() == []
+
+
+def test_delete_habit_allows_recreating_the_same_name(service) -> None:
+    service.add_habit("Read", daily=True, days_csv=None)
+
+    service.delete_habit("Read")
+    recreated = service.add_habit("Read", daily=True, days_csv=None)
+
+    assert recreated.name == "Read"
+
+
+def test_delete_habit_raises_for_missing_name(service) -> None:
+    with pytest.raises(HabitNotFoundError):
+        service.delete_habit("Missing")
 
 
 def test_daily_streak_counts_consecutive_days(service) -> None:

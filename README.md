@@ -16,6 +16,8 @@ habit-tracker
 
 - Add daily habits or habits scheduled on specific weekdays
 - Mark habits as done for today
+- Undo today's completion for a habit
+- Delete a habit and its completion history
 - Show habits due today
 - Check the current streak for one habit
 - Show a weekly report
@@ -73,6 +75,8 @@ habit-tracker add "Go to the gym" --days mon,wed,fri
 habit-tracker list
 habit-tracker today
 habit-tracker done "Read 20 min"
+habit-tracker undo "Read 20 min"
+habit-tracker delete "Go to the gym"
 habit-tracker streak "Read 20 min"
 habit-tracker report
 habit-tracker report --week
@@ -102,6 +106,8 @@ Shell commands:
 - `list`
 - `today`
 - `done`
+- `undo`
+- `delete`
 - `streak`
 - `report`
 - `help`
