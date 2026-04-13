@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "habit-tracker-cli"
-version = "0.1.0"
+version = "0.1.2"
 description = "A small cross-platform habit tracker CLI with a polished interactive shell."
 readme = "README.md"
 requires-python = ">=3.12"
