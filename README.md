@@ -1,6 +1,10 @@
-# habit_tracker_cli
+# habit-tracker-cli
 
 `habit_tracker_cli` is a small cross-platform habit tracker for the terminal. It keeps the command-line workflow simple, stores data locally in SQLite, and includes a lightweight interactive shell for day-to-day use.
+
+- PyPI: https://pypi.org/project/habit-tracker-cli/
+- Repository: https://github.com/Luis696969/habit-tracker-cli
+- Requires Python 3.12+
 
 Public command:
 
@@ -24,32 +28,34 @@ habit-tracker
 
 Recommended: `pipx` from PowerShell or Windows Terminal. `pipx` keeps the app isolated and avoids cluttering the main Python environment.
 
-Install from source today:
-
-```powershell
-pipx install .
-```
-
-Future PyPI install target:
-
 ```powershell
 pipx install habit-tracker-cli
+```
+
+Alternative with `pip`:
+
+```powershell
+pip install habit-tracker-cli
 ```
 
 ### Linux
 
 Recommended: `pipx`.
 
-Install from source today:
+```bash
+pipx install habit-tracker-cli
+```
+
+Alternative with `pip`:
+
+```bash
+pip install habit-tracker-cli
+```
+
+### Install from source
 
 ```bash
 pipx install .
-```
-
-Future PyPI install target:
-
-```bash
-pipx install habit-tracker-cli
 ```
 
 ### Development install from source
@@ -142,26 +148,17 @@ If you installed with `pipx`:
 pipx uninstall habit-tracker-cli
 ```
 
-If you installed from source in editable mode:
+If you installed with `pip`:
 
 ```bash
-pip uninstall habit_tracker_cli
+pip uninstall habit-tracker-cli
 ```
 
 There is intentionally no built-in self-uninstall command. Uninstall remains a manual step for safety.
 
-## GitHub and PyPI readiness
+## Releases
 
-The repository is set up for GitHub publication now and for straightforward future PyPI publication later.
-
-Suggested future release flow:
-
-```bash
-python -m build
-python -m twine check dist/*
-```
-
-When PyPI trusted publishing is configured, releases can be connected to an upload workflow. Until then, manual publishing is the safest option.
+Releases are published to PyPI through GitHub Actions using PyPI trusted publishing.
 
 ## License
 

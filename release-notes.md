@@ -1,8 +1,5 @@
-Initial public release of habit_tracker_cli.
+Bugfix release.
 
 Highlights:
-- Cross-platform storage
-- Interactive shell
-- Help and man pages
-- clear-data maintenance command
-- CI and packaging metadata
+- Fixed CI package metadata check
+- All test jobs passing on Windows and Ubuntu
